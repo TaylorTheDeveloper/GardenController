@@ -8,6 +8,8 @@ import Adafruit_GPIO.SPI as SPI
 import Adafruit_MCP3008
 import Adafruit_DHT
 import board
+import RPi.GPIO as GPIO
+
 # import adafruit_dh#t does not work
 
 # Time Configuration
@@ -21,6 +23,10 @@ CS = 2
 TEMP_CsaH = 1
 HUMID_CH = 2
 
+# Light Pinout configuration
+GPIO_LIGHTS = 25
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(GPIO_LIGHTS, GPIO.OUT)
 
 # DHT11 Temp/Humid Sensor configutation
 GPIO_DHT11 = 17
@@ -65,8 +71,10 @@ while(True):
 	#value = mcp.read_adc(0)
 	#print(value)
 		humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
+		GPIO.output(GPIO_LIGHTS, 1)
 		print("DHT11 humid + temp:",humidity, ConvertFahrenheit(temperature))
 		print("DS18B20 only temp:", read_onewire_temp())
+		GPIO.output(GPIO_LIGHTS, 0)
 		#temp = ConvertFahrenheit(dht.temperature)
 		#humid = dht.humidity
 		#print(humid, temp)
