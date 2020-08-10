@@ -23,10 +23,11 @@ HUMID_CH = 2
 
 
 # DHT11 Temp/Humid Sensor configutation
-GPIO_DHT11 = 4
+GPIO_DHT11 = 17
 TEMPHUMIDSENSOR = 11 #DHT11(11). DHT22(22) or AM2302(2302)
 
 ## One Wire Configuration and Utils for DS18B20 temp sensor
+GPIO_ONEWIRE_DS18B20 = 4
 base_dir = '/sys/bus/w1/devices/'
 device_folder = glob.glob(base_dir + '28*')[0]
 device_file = device_folder + '/w1_slave'
@@ -65,7 +66,7 @@ while(True):
 	#print(value)
 		humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
 		print("DHT11 humid + temp:",humidity, ConvertFahrenheit(temperature))
-		print("DS18B20 only temp:", read_onewire_temp)
+		print("DS18B20 only temp:", read_onewire_temp())
 		#temp = ConvertFahrenheit(dht.temperature)
 		#humid = dht.humidity
 		#print(humid, temp)
