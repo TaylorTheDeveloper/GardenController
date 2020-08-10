@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+import glob
 import time
 #import Adafruit_GPIO.SPI as SPI
 #import adafruit_mcp3008.mcp3008 as MCP
@@ -26,9 +26,30 @@ HUMID_CH = 2
 GPIO_DHT11 = 4
 TEMPHUMIDSENSOR = 11 #DHT11(11). DHT22(22) or AM2302(2302)
 
-# Utils
+## One Wire Configuration and Utils for DS18B20 temp sensor
+base_dir = '/sys/bus/w1/devices/'
+device_folder = glob.glob(base_dir + '28*')[0]
+device_file = device_folder + '/w1_slave'
 
+def read_temp_raw():
+    f = open(device_file, 'r')
+    lines = f.readlines()
+    f.close()
+    return lines
 
+def read_onewire_temp():
+    lines = read_temp_raw()
+    while lines[0].strip()[-3:] != 'YES':
+        time.sleep(0.2)
+        lines = read_temp_raw()
+    equals_pos = lines[1].find('t=')
+    if equals_pos != -1:
+        temp_string = lines[1][equals_pos+2:]
+        temp_c = float(temp_string) / 1000.0
+        temp_f = temp_c * 9.0 / 5.0 + 32.0
+        return temp_c, temp_f
+
+# General Utils
 def ConvertFahrenheit(celsius):
 	return (9/5)*celsius+32
 
@@ -43,7 +64,8 @@ while(True):
 	#value = mcp.read_adc(0)
 	#print(value)
 		humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
-		print(humidity, ConvertFahrenheit(temperature))
+		print("DHT11 humid + temp:",humidity, ConvertFahrenheit(temperature))
+		print("DS18B20 only temp:", read_onewire_temp)
 		#temp = ConvertFahrenheit(dht.temperature)
 		#humid = dht.humidity
 		#print(humid, temp)
