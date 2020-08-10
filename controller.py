@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import glob
 import time
+from datetime import datetime
 #import Adafruit_GPIO.SPI as SPI
 #import adafruit_mcp3008.mcp3008 as MCP
 #from adafruit_mcp3008.analog_in import AnalogIn
@@ -65,16 +66,29 @@ def ConvertFahrenheit(celsius):
 #mcp = Adafruit_MCP008.MCP3008(clk=CLK,cs=CS,miso=MISO,mosi=MOSI)
 #dht =adafruit_dht.DHT11(board.D4)
 
+# time config 12 hour cycle
+LIGHTSSTART = 8 # 8 am light start
+LIGHTSEND = 18 # 8pm light end 
 
 while(True):
 	try:
-	#value = mcp.read_adc(0)
-	#print(value)
+		# Date info
+		now = datetime.now() # May change later to be UTC
+		lightsOnTime = now.replace(hour=LIGHTSSTART, minute=0, second=0, microsecond=0)
+		lightsOffTime = now.replace(hour=LIGHTSEND, minute=0, second=0, microsecond=0)
+		print(now, lightsOffTime)
+		if now >= lightsOnTime and now <= lightsOffTime:
+			GPIO.output(GPIO_LIGHTS, 1)
+		else:
+			GPIO.output(GPIO_LIGHTS, 0)
+
+		#value = mcp.read_adc(0)
+		#print(value)
 		humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
-		GPIO.output(GPIO_LIGHTS, 1)
+		#GPIO.output(GPIO_LIGHTS, 1) Save and make data sample indicator light
 		print("DHT11 humid + temp:",humidity, ConvertFahrenheit(temperature))
 		print("DS18B20 only temp:", read_onewire_temp())
-		GPIO.output(GPIO_LIGHTS, 0)
+		#GPIO.output(GPIO_LIGHTS, 0)
 		#temp = ConvertFahrenheit(dht.temperature)
 		#humid = dht.humidity
 		#print(humid, temp)
