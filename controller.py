@@ -11,10 +11,13 @@ import Adafruit_DHT
 import board
 import RPi.GPIO as GPIO
 
+# Set GPIO board type
+GPIO.setmode(GPIO.BCM)
+
 # import adafruit_dh#t does not work
 
 # Time Configuration
-sleepTime = 3 #seconds
+sleepTime = .2 #seconds
 
 # Software ADC/SPI interface configuration
 CLK = 23
@@ -24,9 +27,13 @@ CS = 2
 TEMP_CsaH = 1
 HUMID_CH = 2
 
+# Water Level Trigger Configuration
+# 0 is full, 1 is needing refill.
+GPIO_WATERLEVEL = 24
+GPIO.setup(GPIO_WATERLEVEL , GPIO.IN)
+
 # Light Pinout configuration
 GPIO_LIGHTS = 25
-GPIO.setmode(GPIO.BCM)
 GPIO.setup(GPIO_LIGHTS, GPIO.OUT)
 
 # DHT11 Temp/Humid Sensor configutation
@@ -81,6 +88,9 @@ while(True):
 			GPIO.output(GPIO_LIGHTS, 1)
 		else:
 			GPIO.output(GPIO_LIGHTS, 0)
+
+		waterLvl = GPIO.input(GPIO_WATERLEVEL)
+		print(waterLvl)
 
 		#value = mcp.read_adc(0)
 		#print(value)
