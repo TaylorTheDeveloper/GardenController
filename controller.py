@@ -12,6 +12,7 @@ import board
 import RPi.GPIO as GPIO
 
 # Set GPIO board type
+GPIO.cleanup()
 GPIO.setmode(GPIO.BCM)
 
 # import adafruit_dh#t does not work
@@ -31,6 +32,11 @@ HUMID_CH = 2
 # 0 is full, 1 is needing refill.
 GPIO_WATERLEVEL = 24
 GPIO.setup(GPIO_WATERLEVEL , GPIO.IN)
+
+# Pump Relay
+GPIO_PUMP = 22
+GPIO.setup(GPIO_PUMP, GPIO.OUT)
+GPIO.output(GPIO_PUMP, 0)
 
 # Light Pinout configuration
 GPIO_LIGHTS = 25
@@ -91,6 +97,13 @@ while(True):
 
 		waterLvl = GPIO.input(GPIO_WATERLEVEL)
 		print(waterLvl)
+		if waterLvl == 0:
+			print("trigger pump")
+			GPIO.output(GPIO_PUMP, 1)
+		else:
+			print("pump off")
+			GPIO.output(GPIO_PUMP, 0)
+
 
 		#value = mcp.read_adc(0)
 		#print(value)
