@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import glob
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 #import Adafruit_GPIO.SPI as SPI
 #import adafruit_mcp3008.mcp3008 as MCP
 #from adafruit_mcp3008.analog_in import AnalogIn
@@ -10,6 +10,9 @@ import Adafruit_MCP3008
 import Adafruit_DHT
 import board
 import RPi.GPIO as GPIO
+import os
+pumponcmd = "hub-ctrl.c/hub-ctrl -h 0 -P 2 -p 1"
+pumpoffcmd = "hub-ctrl.c/hub-ctrl -h 0 -P 2 -p 0"
 
 # Set GPIO board type
 GPIO.cleanup()
@@ -20,6 +23,28 @@ GPIO.setmode(GPIO.BCM)
 # Time Configuration
 sleepTime = .2 #seconds
 
+# Humidity Controller
+GPIO_HUMID = 22
+GPIO.setup(GPIO_HUMID, GPIO.OUT)
+
+# Temp Controller
+GPIO_TEMP = 13
+GPIO.setup(GPIO_TEMP, GPIO.OUT)
+
+# Chamber Fan Controller
+GPIO_FAN = 5
+GPIO.setup(GPIO_FAN, GPIO.OUT)
+FanWaitTimeHours = 3
+FanNextRunTime = datetime.utcnow()  #Fan runs at startup
+FanRunDurationSeconds = 60
+
+#GPIO.output(GPIO_FAN, 1)
+#time.sleep(10)
+#GPIO.output(GPIO_FAN, 0)
+#time.sleep(15)
+#GPIO.output(GPIO_FAN, 1)
+#time.sleep(20)
+#exit()
 # Software ADC/SPI interface configuration
 CLK = 23
 MISO = 21
@@ -44,7 +69,7 @@ GPIO.setup(GPIO_LIGHTS, GPIO.OUT)
 
 # DHT11 Temp/Humid Sensor configutation
 GPIO_DHT11 = 17
-TEMPHUMIDSENSOR = 11 #DHT11(11). DHT22(22) or AM2302(2302)
+TEMPHUMIDSENSOR = 22 #DHT11(11). DHT22(22) or AM2302(2302)
 
 ## One Wire Configuration and Utils for DS18B20 temp sensor
 GPIO_ONEWIRE_DS18B20 = 4
@@ -83,8 +108,22 @@ def ConvertFahrenheit(celsius):
 LIGHTSSTART = 8 # 8 am light start
 LIGHTSEND = 18 # 8pm light end 
 
+#disable pump
+os.system(pumpoffcmd)
+
+print( FanNextRunTime)
+print( datetime.utcnow())
 while(True):
 	try:
+		if FanNextRunTime < datetime.utcnow():
+			print("Fan is on")
+			FanNextRunTime = datetime.utcnow() + timedelta(hours=FanWaitTimeHours)
+			GPIO.output(GPIO_FAN, 1)
+			time.sleep(FanRunDurationSeconds)
+			GPIO.output(GPIO_FAN, 0)
+			print("Fan is off")
+			# todo make non blocking
+
 		# Date info
 		now = datetime.now() # May change later to be UTC
 		lightsOnTime = now.replace(hour=LIGHTSSTART, minute=0, second=0, microsecond=0)
@@ -97,19 +136,37 @@ while(True):
 
 		waterLvl = GPIO.input(GPIO_WATERLEVEL)
 		print(waterLvl)
+
 		if waterLvl == 0:
-			print("trigger pump")
-			GPIO.output(GPIO_PUMP, 1)
-		else:
 			print("pump off")
-			GPIO.output(GPIO_PUMP, 0)
+			#GPIO.output(GPIO_PUMP, 1)
+			os.system(pumpoffcmd)
+		else:
+			print("pump on")
+			#GPIO.output(GPIO_PUMP, 0)
+			os.system(pumponcmd)
 
 
 		#value = mcp.read_adc(0)
 		#print(value)
 		humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
+
+		if humidity < 70:
+			print("humidity on")
+			GPIO.output(GPIO_HUMID, 1)
+		else:
+			print("humidity off")
+			GPIO.output(GPIO_HUMID, 0)
+
+		if temperature < 80:
+			print("heater on")
+			GPIO.output(GPIO_TEMP, 1)
+		else:
+			print("heater off")
+			GPIO.output(GPIO_TEMP, 0)
+
 		#GPIO.output(GPIO_LIGHTS, 1) Save and make data sample indicator light
-		print("DHT11 humid + temp:",humidity, ConvertFahrenheit(temperature))
+		print("DHT2302 humid + temp:",humidity, ConvertFahrenheit(temperature))
 		print("DS18B20 only temp:", read_onewire_temp())
 		#GPIO.output(GPIO_LIGHTS, 0)
 		#temp = ConvertFahrenheit(dht.temperature)
