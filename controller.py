@@ -31,20 +31,15 @@ GPIO.setup(GPIO_HUMID, GPIO.OUT)
 GPIO_TEMP = 13
 GPIO.setup(GPIO_TEMP, GPIO.OUT)
 
-# Chamber Fan Controller
+# Chamber Fan Controller Relay
 GPIO_FAN = 5
 GPIO.setup(GPIO_FAN, GPIO.OUT)
-FanWaitTimeHours = 3
+FanWaitTimeHours = 1
 FanNextRunTime = datetime.utcnow()  #Fan runs at startup
 FanRunDurationSeconds = 60
+FanCheckToStop = False
+FanLastStart = datetime.utcnow()
 
-#GPIO.output(GPIO_FAN, 1)
-#time.sleep(10)
-#GPIO.output(GPIO_FAN, 0)
-#time.sleep(15)
-#GPIO.output(GPIO_FAN, 1)
-#time.sleep(20)
-#exit()
 # Software ADC/SPI interface configuration
 CLK = 23
 MISO = 21
@@ -58,8 +53,8 @@ HUMID_CH = 2
 GPIO_WATERLEVEL = 24
 GPIO.setup(GPIO_WATERLEVEL , GPIO.IN)
 
-# Pump Relay
-GPIO_PUMP = 22
+# Water Refill Pump Relay
+GPIO_PUMP = 20
 GPIO.setup(GPIO_PUMP, GPIO.OUT)
 GPIO.output(GPIO_PUMP, 0)
 
@@ -99,14 +94,13 @@ def read_onewire_temp():
 def ConvertFahrenheit(celsius):
 	return (9/5)*celsius+32
 
-
 # Main Start
 #mcp = Adafruit_MCP008.MCP3008(clk=CLK,cs=CS,miso=MISO,mosi=MOSI)
 #dht =adafruit_dht.DHT11(board.D4)
 
 # time config 12 hour cycle
 LIGHTSSTART = 8 # 8 am light start
-LIGHTSEND = 18 # 8pm light end 
+LIGHTSEND = 18 # 8pm light end
 
 #disable pump
 os.system(pumpoffcmd)
@@ -119,10 +113,18 @@ while(True):
 			print("Fan is on")
 			FanNextRunTime = datetime.utcnow() + timedelta(hours=FanWaitTimeHours)
 			GPIO.output(GPIO_FAN, 1)
-			time.sleep(FanRunDurationSeconds)
-			GPIO.output(GPIO_FAN, 0)
-			print("Fan is off")
+			#time.sleep(FanRunDurationSeconds)
+			FanCheckToStop = True
+			FanLastStart = datetime.utcnow() + timedelta(seconds=FanRunDurationSeconds)
+			#GPIO.output(GPIO_FAN, 0)
+			#print("Fan is off")
 			# todo make non blocking
+
+		if FanCheckToStop:
+			if FanLastStart < datetime.utcnow():
+				GPIO.output(GPIO_FAN, 0)
+				FanCheckToStop = False
+				print("Fan is off")
 
 		# Date info
 		now = datetime.now() # May change later to be UTC
@@ -137,14 +139,14 @@ while(True):
 		waterLvl = GPIO.input(GPIO_WATERLEVEL)
 		print(waterLvl)
 
-		if waterLvl == 0:
-			print("pump off")
-			#GPIO.output(GPIO_PUMP, 1)
-			os.system(pumpoffcmd)
-		else:
+		if waterLvl == 1:
 			print("pump on")
-			#GPIO.output(GPIO_PUMP, 0)
-			os.system(pumponcmd)
+			GPIO.output(GPIO_PUMP, 1)
+			#os.system(pumpoffcmd)
+		else:
+			print("pump off")
+			GPIO.output(GPIO_PUMP, 0)
+			#os.system(pumponcmd)
 
 
 		#value = mcp.read_adc(0)

@@ -5,7 +5,7 @@ import RPi.GPIO as GPIO
 GPIO.cleanup()
 GPIO.setmode(GPIO.BCM)
 
-chan = 5
+chan = 20
 GPIO.setup(chan, GPIO.OUT)
 
 GPIO.output(chan, 0)
