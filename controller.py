@@ -11,8 +11,6 @@ import Adafruit_DHT
 import board
 import RPi.GPIO as GPIO
 import os
-pumponcmd = "hub-ctrl.c/hub-ctrl -h 0 -P 2 -p 1"
-pumpoffcmd = "hub-ctrl.c/hub-ctrl -h 0 -P 2 -p 0"
 
 # Set GPIO board type
 GPIO.cleanup()
@@ -102,9 +100,6 @@ def ConvertFahrenheit(celsius):
 LIGHTSSTART = 8 # 8 am light start
 LIGHTSEND = 18 # 8pm light end
 
-#disable pump
-os.system(pumpoffcmd)
-
 print( FanNextRunTime)
 print( datetime.utcnow())
 while(True):
@@ -142,12 +137,9 @@ while(True):
 		if waterLvl == 1:
 			print("pump on")
 			GPIO.output(GPIO_PUMP, 1)
-			#os.system(pumpoffcmd)
 		else:
 			print("pump off")
 			GPIO.output(GPIO_PUMP, 0)
-			#os.system(pumponcmd)
-
 
 		#value = mcp.read_adc(0)
 		#print(value)
