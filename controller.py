@@ -13,7 +13,6 @@ import RPi.GPIO as GPIO
 import os
 
 # Set GPIO board type
-GPIO.cleanup()
 GPIO.setmode(GPIO.BCM)
 
 # import adafruit_dh#t does not work
@@ -166,8 +165,13 @@ while(True):
 		#temp = ConvertFahrenheit(dht.temperature)
 		#humid = dht.humidity
 		#print(humid, temp)
+	except KeyboardInterrupt:
+		print("Goodbye!")
 	except RuntimeError as error:
 		# Errors happen fairly often, DHT's are hard to read, just keep going
 		print(error.args[0])
+	finally:
+		GPIO.cleanup()
+		exit()
 
 	time.sleep(sleepTime)
