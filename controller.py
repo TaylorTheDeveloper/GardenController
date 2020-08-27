@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 #import adafruit_mcp3008.mcp3008 as MCP
 #from adafruit_mcp3008.analog_in import AnalogIn
 import Adafruit_GPIO.SPI as SPI
-import Adafruit_MCP3008
 import Adafruit_DHT
 import board
 import RPi.GPIO as GPIO
@@ -15,10 +14,8 @@ import os
 # Set GPIO board type
 GPIO.setmode(GPIO.BCM)
 
-# import adafruit_dh#t does not work
-
 # Time Configuration
-sleepTime = .2 #seconds
+sleepTime = 1 #seconds
 
 # Humidity Controller
 GPIO_HUMID = 22
@@ -37,14 +34,6 @@ FanRunDurationSeconds = 60
 FanCheckToStop = False
 FanLastStart = datetime.utcnow()
 
-# Software ADC/SPI interface configuration
-CLK = 23
-MISO = 21
-MOSI = 19
-CS = 2
-TEMP_CsaH = 1
-HUMID_CH = 2
-
 # Water Level Trigger Configuration
 # 0 is full, 1 is needing refill.
 GPIO_WATERLEVEL = 24
@@ -61,9 +50,9 @@ GPIO.setup(GPIO_LIGHTS, GPIO.OUT)
 
 # DHT11 Temp/Humid Sensor configutation
 GPIO_DHT11 = 17
-TEMPHUMIDSENSOR = 22 #DHT11(11). DHT22(22) or AM2302(2302)
+TEMPHUMIDSENSOR = 22 #DHT11(11). DHT22(22) or AM2302(22)
 
-## One Wire Configuration and Utils for DS18B20 temp sensor
+# One Wire Configuration and Utils for DS18B20 temp sensor
 GPIO_ONEWIRE_DS18B20 = 4
 base_dir = '/sys/bus/w1/devices/'
 device_folder = glob.glob(base_dir + '28*')[0]
@@ -91,34 +80,24 @@ def read_onewire_temp():
 def ConvertFahrenheit(celsius):
 	return (9/5)*celsius+32
 
-# Main Start
-#mcp = Adafruit_MCP008.MCP3008(clk=CLK,cs=CS,miso=MISO,mosi=MOSI)
-#dht =adafruit_dht.DHT11(board.D4)
-
 # time config 12 hour cycle
 LIGHTSSTART = 8 # 8 am light start
 LIGHTSEND = 18 # 8pm light end
 
-print( FanNextRunTime)
-print( datetime.utcnow())
-while(True):
-	try:
+print("Starting Garden Controller")
+try:
+	while True:
 		if FanNextRunTime < datetime.utcnow():
-			print("Fan is on")
+			print("fan on")
 			FanNextRunTime = datetime.utcnow() + timedelta(hours=FanWaitTimeHours)
 			GPIO.output(GPIO_FAN, 1)
-			#time.sleep(FanRunDurationSeconds)
 			FanCheckToStop = True
 			FanLastStart = datetime.utcnow() + timedelta(seconds=FanRunDurationSeconds)
-			#GPIO.output(GPIO_FAN, 0)
-			#print("Fan is off")
-			# todo make non blocking
-
 		if FanCheckToStop:
 			if FanLastStart < datetime.utcnow():
 				GPIO.output(GPIO_FAN, 0)
 				FanCheckToStop = False
-				print("Fan is off")
+				print("fan off")
 
 		# Date info
 		now = datetime.now() # May change later to be UTC
@@ -140,8 +119,6 @@ while(True):
 			print("pump off")
 			GPIO.output(GPIO_PUMP, 0)
 
-		#value = mcp.read_adc(0)
-		#print(value)
 		humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
 
 		if humidity < 70:
@@ -160,18 +137,14 @@ while(True):
 
 		#GPIO.output(GPIO_LIGHTS, 1) Save and make data sample indicator light
 		print("DHT2302 humid + temp:",humidity, ConvertFahrenheit(temperature))
-		print("DS18B20 only temp:", read_onewire_temp())
-		#GPIO.output(GPIO_LIGHTS, 0)
-		#temp = ConvertFahrenheit(dht.temperature)
-		#humid = dht.humidity
-		#print(humid, temp)
-	except KeyboardInterrupt:
-		print("Goodbye!")
-	except RuntimeError as error:
-		# Errors happen fairly often, DHT's are hard to read, just keep going
-		print(error.args[0])
-	finally:
-		GPIO.cleanup()
-		exit()
+		print("DS18B20 room reference temp:", read_onewire_temp())
+		time.sleep(sleepTime)
+except KeyboardInterrupt:
+	print("Goodbye!")
+except RuntimeError as error:
+	# Errors happen fairly often, DHT's are hard to read, just keep going
+	print(error.args[0])
+finally:
+	GPIO.cleanup()
+	exit()
 
-	time.sleep(sleepTime)
