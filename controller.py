@@ -85,8 +85,8 @@ LIGHTSSTART = 8 # 8 am light start
 LIGHTSEND = 18 # 8pm light end
 
 print("Starting Garden Controller")
-try:
-	while True:
+while True:
+	try:
 		if FanNextRunTime < datetime.utcnow():
 			print("fan on")
 			FanNextRunTime = datetime.utcnow() + timedelta(hours=FanWaitTimeHours)
@@ -139,12 +139,12 @@ try:
 		print("DHT2302 humid + temp:",humidity, ConvertFahrenheit(temperature))
 		print("DS18B20 room reference temp:", read_onewire_temp())
 		time.sleep(sleepTime)
-except KeyboardInterrupt:
-	print("Goodbye!")
-except RuntimeError as error:
-	# Errors happen fairly often, DHT's are hard to read, just keep going
-	print(error.args[0])
-finally:
-	GPIO.cleanup()
-	exit()
+	except KeyboardInterrupt:
+		print("Goodbye!")
+	except RuntimeError as error:
+		# Errors happen fairly often, DHT's are hard to read, just keep going
+		print(error.args[0])
+	finally:
+		GPIO.cleanup()
+		break
 
