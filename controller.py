@@ -85,7 +85,7 @@ LIGHTSSTART = 8 # 8 am light start
 LIGHTSEND = 18 # 8pm light end
 
 print("Starting Garden Controller")
-while True:
+while(True):
 	try:
 		if FanNextRunTime < datetime.utcnow():
 			print("fan on")
@@ -141,10 +141,9 @@ while True:
 		time.sleep(sleepTime)
 	except KeyboardInterrupt:
 		print("Goodbye!")
+		GPIO.cleanup()
+		break
 	except RuntimeError as error:
 		# Errors happen fairly often, DHT's are hard to read, just keep going
 		print(error.args[0])
-	finally:
-		GPIO.cleanup()
-		break
 
