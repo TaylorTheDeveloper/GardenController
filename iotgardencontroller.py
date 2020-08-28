@@ -209,6 +209,7 @@ async def main():
 					GPIO.output(GPIO_PUMP, 0)
 
 				humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
+				refTempC, refTempF = read_onewire_temp()
 
 				if humidity is not None and humidity < 95:
 					print("humidity on")
@@ -226,7 +227,7 @@ async def main():
 
 				#GPIO.output(GPIO_LIGHTS, 1) Save and make data sample indicator light
 				print("DHT2302 humid + temp:",humidity, ConvertFahrenheit(temperature))
-				print("DS18B20 room reference temp:", read_onewire_temp())
+				print("DS18B20 reference temp:", refTempF)
 			except KeyboardInterrupt:
 				print("Goodbye!")
 				GPIO.cleanup()
@@ -235,9 +236,7 @@ async def main():
 				# Errors happen fairly often, DHT's are hard to read, just keep going
 				print(error.args[0])
 
-			temp = random.randrange(1, 75)
-			humid = random.randrange(30, 99)
-			payload = json.dumps({'temperature': temperature, 'humidity': humidity})
+			payload = json.dumps({'reftemperature': refTempF,'temperature': ConvertFahrenheit(temperature), 'humidity': humidity})
 			msg = Message(payload)
 			await device_client.send_message(msg, )
 			print(f'Sent message: {msg}')
