@@ -28,83 +28,6 @@ async def main():
 	symmetric_key = '5LEsrMz8hcovUT3xZ1S4YWdlWdCPMyioJmuNQ0VeLY8='
 
 	delay = 5
-
-	### Inputs ###
-
-	# Water Level Trigger Configuration
-	# 0 is full, 1 is needing refill.
-	GPIO_WATERLEVEL = 24
-	GPIO.setup(GPIO_WATERLEVEL , GPIO.IN)
-
-	# DHT11 Temp/Humid Sensor configutation
-	GPIO_DHT11 = 17
-	#DHT11(11). DHT22(22) or AM2302(22)
-	TEMPHUMIDSENSOR = 22
-
-	# One Wire Configuration and Utils for DS18B20 temp sensor
-	GPIO_ONEWIRE_DS18B20 = 4
-	base_dir = '/sys/bus/w1/devices/'
-	device_folder = glob.glob(base_dir + '28*')[0]
-	device_file = device_folder + '/w1_slave'
-
-	# One Wire
-	def read_temp_raw():
-	    f = open(device_file, 'r')
-	    lines = f.readlines()
-	    f.close()
-	    return lines
-
-	# One Wire
-	def read_onewire_temp():
-	    lines = read_temp_raw()
-	    while lines[0].strip()[-3:] != 'YES':
-	        time.sleep(0.2)
-	        lines = read_temp_raw()
-	    equals_pos = lines[1].find('t=')
-	    if equals_pos != -1:
-	        temp_string = lines[1][equals_pos+2:]
-	        temp_c = float(temp_string) / 1000.0
-	        temp_f = temp_c * 9.0 / 5.0 + 32.0
-	        return temp_c, temp_f
-
-	### Outputs ###
-
-	# Humidity Controller
-	GPIO_HUMID = 22
-	GPIO.setup(GPIO_HUMID, GPIO.OUT)
-
-	# Temp Controller
-	GPIO_TEMP = 13
-	GPIO.setup(GPIO_TEMP, GPIO.OUT)
-
-	# Chamber Fan Controller Relay
-	GPIO_FAN = 5
-	GPIO.setup(GPIO_FAN, GPIO.OUT)
-	FanWaitTimeHours = 1
-	FanNextRunTime = datetime.utcnow()  #Fan runs at startup
-	FanRunDurationSeconds = 60
-	FanCheckToStop = False
-	FanLastStart = datetime.utcnow()
-
-	# Water Refill Pump Relay
-	GPIO_PUMP = 20
-	GPIO.setup(GPIO_PUMP, GPIO.OUT)
-	GPIO.output(GPIO_PUMP, 0)
-
-	# Light Pinout configuration
-	GPIO_LIGHTS = 25
-	GPIO.setup(GPIO_LIGHTS, GPIO.OUT)
-	# time config 12 hour cycle
-	LIGHTSSTARTTIME = 8 # 8 am light start
-	LIGHTSENDTIME = 18 # 8pm light end
-
-	# General Utils
-	def ConvertFahrenheit(celsius):
-		return (9/5)*celsius+32
-
-	# Set GPIO board type
-	GPIO.setmode(GPIO.BCM)
-
 	########## End ##########
 	#########################
 
@@ -173,6 +96,83 @@ async def main():
 
 	async def send_telemetry():
 		print(f'Sending telemetry from the provisioned device every {delay} seconds')
+
+		### Inputs ###
+
+		# Water Level Trigger Configuration
+		# 0 is full, 1 is needing refill.
+		GPIO_WATERLEVEL = 24
+		GPIO.setup(GPIO_WATERLEVEL , GPIO.IN)
+
+		# DHT11 Temp/Humid Sensor configutation
+		GPIO_DHT11 = 17
+		#DHT11(11). DHT22(22) or AM2302(22)
+		TEMPHUMIDSENSOR = 22
+
+		# One Wire Configuration and Utils for DS18B20 temp sensor
+		GPIO_ONEWIRE_DS18B20 = 4
+		base_dir = '/sys/bus/w1/devices/'
+		device_folder = glob.glob(base_dir + '28*')[0]
+		device_file = device_folder + '/w1_slave'
+
+		# One Wire
+		def read_temp_raw():
+		    f = open(device_file, 'r')
+		    lines = f.readlines()
+		    f.close()
+		    return lines
+
+		# One Wire
+		def read_onewire_temp():
+		    lines = read_temp_raw()
+		    while lines[0].strip()[-3:] != 'YES':
+		        time.sleep(0.2)
+		        lines = read_temp_raw()
+		    equals_pos = lines[1].find('t=')
+		    if equals_pos != -1:
+		        temp_string = lines[1][equals_pos+2:]
+		        temp_c = float(temp_string) / 1000.0
+		        temp_f = temp_c * 9.0 / 5.0 + 32.0
+		        return temp_c, temp_f
+
+		### Outputs ###
+
+		# Humidity Controller
+		GPIO_HUMID = 22
+		GPIO.setup(GPIO_HUMID, GPIO.OUT)
+
+		# Temp Controller
+		GPIO_TEMP = 13
+		GPIO.setup(GPIO_TEMP, GPIO.OUT)
+
+		# Chamber Fan Controller Relay
+		GPIO_FAN = 5
+		GPIO.setup(GPIO_FAN, GPIO.OUT)
+		FanWaitTimeHours = 1
+		FanNextRunTime = datetime.utcnow()  #Fan runs at startup
+		FanRunDurationSeconds = 60
+		FanCheckToStop = False
+		FanLastStart = datetime.utcnow()
+
+		# Water Refill Pump Relay
+		GPIO_PUMP = 20
+		GPIO.setup(GPIO_PUMP, GPIO.OUT)
+		GPIO.output(GPIO_PUMP, 0)
+
+		# Light Pinout configuration
+		GPIO_LIGHTS = 25
+		GPIO.setup(GPIO_LIGHTS, GPIO.OUT)
+		# time config 12 hour cycle
+		LIGHTSSTARTHOUR = 8 # 8 am light start
+		LIGHTSENDHOUR = 18 # 8pm light end
+
+		# General Utils
+		def ConvertFahrenheit(celsius):
+			return (9/5)*celsius+32
+
+		# Set GPIO board type
+		GPIO.setmode(GPIO.BCM)
+
 		while True:
 			try:
 				if FanNextRunTime < datetime.utcnow():
@@ -189,8 +189,8 @@ async def main():
 
 				# Date info
 				now = datetime.now() # May change later to be UTC
-				lightsOnTime = now.replace(hour=LIGHTSSTART, minute=0, second=0, microsecond=0)
-				lightsOffTime = now.replace(hour=LIGHTSEND, minute=0, second=0, microsecond=0)
+				lightsOnTime = now.replace(hour=LIGHTSSTARTHOUR, minute=0, second=0, microsecond=0)
+				lightsOffTime = now.replace(hour=LIGHTSENDHOUR, minute=0, second=0, microsecond=0)
 
 				if now >= lightsOnTime and now <= lightsOffTime:
 					print("lights on")
