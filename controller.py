@@ -2,9 +2,6 @@
 import glob
 import time
 from datetime import datetime, timedelta
-#import Adafruit_GPIO.SPI as SPI
-#import adafruit_mcp3008.mcp3008 as MCP
-#from adafruit_mcp3008.analog_in import AnalogIn
 import Adafruit_GPIO.SPI as SPI
 import Adafruit_DHT
 import board
@@ -15,7 +12,7 @@ import os
 GPIO.setmode(GPIO.BCM)
 
 # Time Configuration
-sleepTime = .3 #seconds
+sleepTime = 1 #seconds
 
 # Humidity Controller
 GPIO_HUMID = 22
@@ -82,10 +79,13 @@ def ConvertFahrenheit(celsius):
 
 # time config 12 hour cycle
 LIGHTSSTART = 8 # 8 am light start
-LIGHTSEND = 18+2 # 8pm light end
+LIGHTSEND = 18 # 8pm light end
 
 print("Starting Garden Controller")
 while(True):
+	print()
+	print("time: ")
+	print(datetime.utcnow())
 	try:
 		if FanNextRunTime < datetime.utcnow():
 			print("fan on")
@@ -103,14 +103,16 @@ while(True):
 		now = datetime.now() # May change later to be UTC
 		lightsOnTime = now.replace(hour=LIGHTSSTART, minute=0, second=0, microsecond=0)
 		lightsOffTime = now.replace(hour=LIGHTSEND, minute=0, second=0, microsecond=0)
-		print(now, lightsOffTime)
+#		print(now, lightsOffTime)
 		if now >= lightsOnTime and now <= lightsOffTime:
+			print("lights on")
 			GPIO.output(GPIO_LIGHTS, 1)
 		else:
+			print("lights off")
 			GPIO.output(GPIO_LIGHTS, 0)
 
 		waterLvl = GPIO.input(GPIO_WATERLEVEL)
-		print(waterLvl)
+		#print(waterLvl)
 
 		if waterLvl == 1:
 			print("pump on")
@@ -121,7 +123,7 @@ while(True):
 
 		humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
 
-		if humidity < 95:
+		if humidity is not None and humidity < 95:
 			print("humidity on")
 			GPIO.output(GPIO_HUMID, 1)
 		else:
@@ -146,4 +148,6 @@ while(True):
 	except RuntimeError as error:
 		# Errors happen fairly often, DHT's are hard to read, just keep going
 		print(error.args[0])
+
+GPIO.cleanup()
 
