@@ -175,39 +175,6 @@ async def main():
 		print(f'Sending telemetry from the provisioned device every {delay} seconds')
 		while True:
 			try:
-				if FanNextRunTime < datetime.utcnow():
-					print("fan on")
-					FanNextRunTime = datetime.utcnow() + timedelta(hours=FanWaitTimeHours)
-					GPIO.output(GPIO_FAN, 1)
-					FanCheckToStop = True
-					FanLastStart = datetime.utcnow() + timedelta(seconds=FanRunDurationSeconds)
-				if FanCheckToStop:
-					if FanLastStart < datetime.utcnow():
-						GPIO.output(GPIO_FAN, 0)
-						FanCheckToStop = False
-						print("fan off")
-
-				# Date info
-				now = datetime.now() # May change later to be UTC
-				lightsOnTime = now.replace(hour=LIGHTSSTART, minute=0, second=0, microsecond=0)
-				lightsOffTime = now.replace(hour=LIGHTSEND, minute=0, second=0, microsecond=0)
-
-				if now >= lightsOnTime and now <= lightsOffTime:
-					print("lights on")
-					GPIO.output(GPIO_LIGHTS, 1)
-				else:
-					print("lights off")
-					GPIO.output(GPIO_LIGHTS, 0)
-
-				waterLvl = GPIO.input(GPIO_WATERLEVEL)
-
-				if waterLvl == 1:
-					print("pump on")
-					GPIO.output(GPIO_PUMP, 1)
-				else:
-					print("pump off")
-					GPIO.output(GPIO_PUMP, 0)
-
 				humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
 
 				if humidity is not None and humidity < 95:
