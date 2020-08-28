@@ -251,7 +251,7 @@ async def main():
 				# Errors happen fairly often, DHT's are hard to read, just keep going
 				print(error.args[0])
 
-			payload = json.dumps({'reftemperature': refTempF,'temperature': ConvertFahrenheit(temperature), 'humidity': humidity,'humidity': humidity,'humidityrelay': HUMID_RELAY_OUT,'heaterrelay': HEATER_RELAY_OUT,'lightrelay': LIGHTS_RELAY_OUT,'pumprelay': PUMP_RELAY_OUT,'fanrelay': FAN_RELAY_OUT})
+			payload = json.dumps({'reference': refTempF,'temperature': ConvertFahrenheit(temperature), 'humidity': humidity,'humidity': humidity,'humidityrelay': HUMID_RELAY_OUT,'heaterrelay': HEATER_RELAY_OUT,'lightrelay': LIGHTS_RELAY_OUT,'pumprelay': PUMP_RELAY_OUT,'fanrelay': FAN_RELAY_OUT})
 			msg = Message(payload)
 			await device_client.send_message(msg, )
 			print(f'Sent message: {msg}')
