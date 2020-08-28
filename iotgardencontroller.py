@@ -175,6 +175,39 @@ async def main():
 		print(f'Sending telemetry from the provisioned device every {delay} seconds')
 		while True:
 			try:
+				if FanNextRunTime < datetime.utcnow():
+					print("fan on")
+					FanNextRunTime = datetime.utcnow() + timedelta(hours=FanWaitTimeHours)
+					GPIO.output(GPIO_FAN, 1)
+					FanCheckToStop = True
+					FanLastStart = datetime.utcnow() + timedelta(seconds=FanRunDurationSeconds)
+				if FanCheckToStop:
+					if FanLastStart < datetime.utcnow():
+						GPIO.output(GPIO_FAN, 0)
+						FanCheckToStop = False
+						print("fan off")
+
+				# Date info
+				now = datetime.now() # May change later to be UTC
+				lightsOnTime = now.replace(hour=LIGHTSSTART, minute=0, second=0, microsecond=0)
+				lightsOffTime = now.replace(hour=LIGHTSEND, minute=0, second=0, microsecond=0)
+
+				if now >= lightsOnTime and now <= lightsOffTime:
+					print("lights on")
+					GPIO.output(GPIO_LIGHTS, 1)
+				else:
+					print("lights off")
+					GPIO.output(GPIO_LIGHTS, 0)
+
+				waterLvl = GPIO.input(GPIO_WATERLEVEL)
+
+				if waterLvl == 1:
+					print("pump on")
+					GPIO.output(GPIO_PUMP, 1)
+				else:
+					print("pump off")
+					GPIO.output(GPIO_PUMP, 0)
+
 				humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
 
 				if humidity is not None and humidity < 95:
@@ -194,22 +227,15 @@ async def main():
 				#GPIO.output(GPIO_LIGHTS, 1) Save and make data sample indicator light
 				print("DHT2302 humid + temp:",humidity, ConvertFahrenheit(temperature))
 				print("DS18B20 room reference temp:", read_onewire_temp())
-				time.sleep(sleepTime)
-			except KeyboardInterrupt:
-				print("Goodbye!")
-				GPIO.cleanup()
-				break
+					
+				payload = json.dumps({'temperature': temperature, 'humidity': humidity})
+				msg = Message(payload)
+				await device_client.send_message(msg, )
+				print(f'Sent message: {msg}')
+				await asyncio.sleep(delay)
 			except RuntimeError as error:
 				# Errors happen fairly often, DHT's are hard to read, just keep going
 				print(error.args[0])
-
-			temp = random.randrange(1, 75)
-			humid = random.randrange(30, 99)
-			payload = json.dumps({'temperature': temperature, 'humidity': humidity})
-			msg = Message(payload)
-			await device_client.send_message(msg, )
-			print(f'Sent message: {msg}')
-			await asyncio.sleep(delay)
 
 	async def blink_command(request):
 	    print('Received synchronous call to blink')
