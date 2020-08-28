@@ -227,15 +227,21 @@ async def main():
 				#GPIO.output(GPIO_LIGHTS, 1) Save and make data sample indicator light
 				print("DHT2302 humid + temp:",humidity, ConvertFahrenheit(temperature))
 				print("DS18B20 room reference temp:", read_onewire_temp())
-					
-				payload = json.dumps({'temperature': temperature, 'humidity': humidity})
-				msg = Message(payload)
-				await device_client.send_message(msg, )
-				print(f'Sent message: {msg}')
-				await asyncio.sleep(delay)
+			except KeyboardInterrupt:
+				print("Goodbye!")
+				GPIO.cleanup()
+				break
 			except RuntimeError as error:
 				# Errors happen fairly often, DHT's are hard to read, just keep going
 				print(error.args[0])
+
+			temp = random.randrange(1, 75)
+			humid = random.randrange(30, 99)
+			payload = json.dumps({'temperature': temperature, 'humidity': humidity})
+			msg = Message(payload)
+			await device_client.send_message(msg, )
+			print(f'Sent message: {msg}')
+			await asyncio.sleep(delay)
 
 	async def blink_command(request):
 	    print('Received synchronous call to blink')
