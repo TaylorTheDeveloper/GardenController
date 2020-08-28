@@ -29,44 +29,17 @@ async def main():
 
 	delay = 5
 
-		# Humidity Controller
-	GPIO_HUMID = 22
-	GPIO.setup(GPIO_HUMID, GPIO.OUT)
-
-	# Temp Controller
-	GPIO_TEMP = 13
-	GPIO.setup(GPIO_TEMP, GPIO.OUT)
-
-	# Chamber Fan Controller Relay
-	GPIO_FAN = 5
-	GPIO.setup(GPIO_FAN, GPIO.OUT)
-	FanWaitTimeHours = 1
-	FanNextRunTime = datetime.utcnow()  #Fan runs at startup
-	FanRunDurationSeconds = 60
-	FanCheckToStop = False
-	FanLastStart = datetime.utcnow()
+	### Inputs ###
 
 	# Water Level Trigger Configuration
 	# 0 is full, 1 is needing refill.
 	GPIO_WATERLEVEL = 24
 	GPIO.setup(GPIO_WATERLEVEL , GPIO.IN)
 
-	# Water Refill Pump Relay
-	GPIO_PUMP = 20
-	GPIO.setup(GPIO_PUMP, GPIO.OUT)
-	GPIO.output(GPIO_PUMP, 0)
-
-	# Light Pinout configuration
-	GPIO_LIGHTS = 25
-	GPIO.setup(GPIO_LIGHTS, GPIO.OUT)
-	# time config 12 hour cycle
-	LIGHTSSTARTTIME = 8 # 8 am light start
-	LIGHTSENDTIME = 18 # 8pm light end
-
 	# DHT11 Temp/Humid Sensor configutation
 	GPIO_DHT11 = 17
 	#DHT11(11). DHT22(22) or AM2302(22)
-	TEMPHUMIDSENSOR = 22 
+	TEMPHUMIDSENSOR = 22
 
 	# One Wire Configuration and Utils for DS18B20 temp sensor
 	GPIO_ONEWIRE_DS18B20 = 4
@@ -94,10 +67,40 @@ async def main():
 	        temp_f = temp_c * 9.0 / 5.0 + 32.0
 	        return temp_c, temp_f
 
+	### Outputs ###
+
+	# Humidity Controller
+	GPIO_HUMID = 22
+	GPIO.setup(GPIO_HUMID, GPIO.OUT)
+
+	# Temp Controller
+	GPIO_TEMP = 13
+	GPIO.setup(GPIO_TEMP, GPIO.OUT)
+
+	# Chamber Fan Controller Relay
+	GPIO_FAN = 5
+	GPIO.setup(GPIO_FAN, GPIO.OUT)
+	FanWaitTimeHours = 1
+	FanNextRunTime = datetime.utcnow()  #Fan runs at startup
+	FanRunDurationSeconds = 60
+	FanCheckToStop = False
+	FanLastStart = datetime.utcnow()
+
+	# Water Refill Pump Relay
+	GPIO_PUMP = 20
+	GPIO.setup(GPIO_PUMP, GPIO.OUT)
+	GPIO.output(GPIO_PUMP, 0)
+
+	# Light Pinout configuration
+	GPIO_LIGHTS = 25
+	GPIO.setup(GPIO_LIGHTS, GPIO.OUT)
+	# time config 12 hour cycle
+	LIGHTSSTARTTIME = 8 # 8 am light start
+	LIGHTSENDTIME = 18 # 8pm light end
+
 	# General Utils
 	def ConvertFahrenheit(celsius):
 		return (9/5)*celsius+32
-
 
 	# Set GPIO board type
 	GPIO.setmode(GPIO.BCM)
