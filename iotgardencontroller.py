@@ -245,21 +245,21 @@ async def main():
 
 	  # define behavior for receiving a twin patch
 	async def twin_patch_listener():
-	    while True:
-	        patch = await device_client.receive_twin_desired_properties_patch() # blocking
-	        to_update = patch.keys() & settings.keys()
-	        await asyncio.gather(
-	            *[settings[setting](patch[setting], patch['$version']) for setting in to_update]
-	        )
+		while True:
+			patch = await device_client.receive_twin_desired_properties_patch() # blocking
+			to_update = patch.keys() & settings.keys()
+			await asyncio.gather(
+			    *[settings[setting](patch[setting], patch['$version']) for setting in to_update]
+			)
 
 	# Define behavior for halting the application
 	def stdin_listener():
-	    while True:
-	        selection = input('Press Q to quit\n')
-	        if selection == 'Q' or selection == 'q':
+		while True:
+			selection = input('Press Q to quit\n')
+			if selection == 'Q' or selection == 'q':
 				GPIO.cleanup()
-	            print('Quitting...')
-	            break
+				print('Quitting...')
+				break
 
 	device_client = await connect_device()
 
