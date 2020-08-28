@@ -23,34 +23,35 @@ async def main():
 
 	# All the remaining code is nested within this main function
 	async def register_device():
-	provisioning_device_client = ProvisioningDeviceClient.create_from_symmetric_key(
-		provisioning_host=provisioning_host,
-		registration_id=registration_id,
-		id_scope=id_scope,
-		symmetric_key=symmetric_key,
-	)
+		provisioning_device_client = ProvisioningDeviceClient.create_from_symmetric_key(
+			provisioning_host=provisioning_host,
+			registration_id=registration_id,
+			id_scope=id_scope,
+			symmetric_key=symmetric_key,
+		)
 
-	registration_result = await provisioning_device_client.register()
+		registration_result = await provisioning_device_client.register()
 
-	print(f'Registration result: {registration_result.status}')
+		print(f'Registration result: {registration_result.status}')
 
-	return registration_result
+		return registration_result
 
 	async def connect_device():
-	device_client = None
+		device_client = None
 
-	try:
-		registration_result = await register_device()
-		if registration_result.status == 'assigned':
-			device_client = IoTHubDeviceClient.create_from_symmetric_key(
-			  symmetric_key=symmetric_key,
-			  hostname=registration_result.registration_state.assigned_hub,
-			  device_id=registration_result.registration_state.device_id,
-			)
-			# Connect the client.
-			await device_client.connect()
-			print('Device connected successfully')
-	finally:
+		try:
+			registration_result = await register_device()
+
+			if registration_result.status == 'assigned':
+				device_client = IoTHubDeviceClient.create_from_symmetric_key(
+			  	symmetric_key=symmetric_key,
+			  	hostname=registration_result.registration_state.assigned_hub,
+			  	device_id=registration_result.registration_state.device_id,
+				)
+				# Connect the client.
+				await device_client.connect()
+				print('Device connected successfully')
+		finally:
 			return device_client
 
 	async def register_device():
@@ -88,7 +89,7 @@ async def main():
 	    while True:
 	        temp = random.randrange(1, 75)
 	        humid = random.randrange(30, 99)
-	        payload = json.dumps({'temp': temp, 'humid': humid})
+	        payload = json.dumps({'temperature': temp, 'humidity': humid})
 	        msg = Message(payload)
 	        await device_client.send_message(msg, )
 	        print(f'Sent message: {msg}')
