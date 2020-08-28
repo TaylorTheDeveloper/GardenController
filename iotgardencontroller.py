@@ -140,10 +140,12 @@ async def main():
 		# Humidity Controller
 		GPIO_HUMID = 22
 		GPIO.setup(GPIO_HUMID, GPIO.OUT)
+		HUMID_RELAY_OUT = 0
 
 		# Temp Controller
 		GPIO_TEMP = 13
 		GPIO.setup(GPIO_TEMP, GPIO.OUT)
+		HEATER_RELAY_OUT = 0
 
 		# Chamber Fan Controller Relay
 		GPIO_FAN = 5
@@ -153,11 +155,13 @@ async def main():
 		FanRunDurationSeconds = 60
 		FanCheckToStop = False
 		FanLastStart = datetime.utcnow()
+		FAN_RELAY_OUT = 0
 
 		# Water Refill Pump Relay
 		GPIO_PUMP = 20
 		GPIO.setup(GPIO_PUMP, GPIO.OUT)
 		GPIO.output(GPIO_PUMP, 0)
+		PUMP_RELAY_OUT = 0
 
 		# Light Pinout configuration
 		GPIO_LIGHTS = 25
@@ -165,6 +169,7 @@ async def main():
 		# time config 12 hour cycle
 		LIGHTSSTARTHOUR = 8 # 8 am light start
 		LIGHTSENDHOUR = 18 # 8pm light end
+		LIGHTS_RELAY_OUT = 0
 
 		# General Utils
 		def ConvertFahrenheit(celsius):
@@ -178,11 +183,13 @@ async def main():
 				if FanNextRunTime < datetime.utcnow():
 					print("fan on")
 					FanNextRunTime = datetime.utcnow() + timedelta(hours=FanWaitTimeHours)
+					FAN_RELAY_OUT = 1
 					GPIO.output(GPIO_FAN, 1)
 					FanCheckToStop = True
 					FanLastStart = datetime.utcnow() + timedelta(seconds=FanRunDurationSeconds)
 				if FanCheckToStop:
 					if FanLastStart < datetime.utcnow():
+						FAN_RELAY_OUT = 0
 						GPIO.output(GPIO_FAN, 0)
 						FanCheckToStop = False
 						print("fan off")
@@ -194,18 +201,22 @@ async def main():
 
 				if now >= lightsOnTime and now <= lightsOffTime:
 					print("lights on")
+					LIGHTS_RELAY_OUT = 1
 					GPIO.output(GPIO_LIGHTS, 1)
 				else:
 					print("lights off")
+					LIGHTS_RELAY_OUT = 0
 					GPIO.output(GPIO_LIGHTS, 0)
 
 				waterLvl = GPIO.input(GPIO_WATERLEVEL)
 
 				if waterLvl == 1:
 					print("pump on")
+					PUMP_RELAY_OUT = 1
 					GPIO.output(GPIO_PUMP, 1)
 				else:
 					print("pump off")
+					PUMP_RELAY_OUT = 0
 					GPIO.output(GPIO_PUMP, 0)
 
 				humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
@@ -213,16 +224,20 @@ async def main():
 
 				if humidity is not None and humidity < 95:
 					print("humidity on")
+					HUMID_RELAY_OUT = 1
 					GPIO.output(GPIO_HUMID, 1)
 				else:
 					print("humidity off")
+					HUMID_RELAY_OUT = 0
 					GPIO.output(GPIO_HUMID, 0)
 
 				if temperature < 80:
 					print("heater on")
+					HEATER_RELAY_OUT = 1
 					GPIO.output(GPIO_TEMP, 1)
 				else:
 					print("heater off")
+					HEATER_RELAY_OUT = 0
 					GPIO.output(GPIO_TEMP, 0)
 
 				#GPIO.output(GPIO_LIGHTS, 1) Save and make data sample indicator light
@@ -236,7 +251,7 @@ async def main():
 				# Errors happen fairly often, DHT's are hard to read, just keep going
 				print(error.args[0])
 
-			payload = json.dumps({'reftemperature': refTempF,'temperature': ConvertFahrenheit(temperature), 'humidity': humidity})
+			payload = json.dumps({'reftemperature': refTempF,'temperature': ConvertFahrenheit(temperature), 'humidity': humidity,'humidity': humidity,'humidityrelay': HUMID_RELAY_OUT,'heaterrelay': HEATER_RELAY_OUT,'lightrelay': LIGHTS_RELAY_OUT,'pumprelay': PUMP_RELAY_OUT,'fanrelay': FAN_RELAY_OUT})
 			msg = Message(payload)
 			await device_client.send_message(msg, )
 			print(f'Sent message: {msg}')
