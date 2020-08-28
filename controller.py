@@ -15,7 +15,7 @@ import os
 GPIO.setmode(GPIO.BCM)
 
 # Time Configuration
-sleepTime = 1 #seconds
+sleepTime = .3 #seconds
 
 # Humidity Controller
 GPIO_HUMID = 22
@@ -82,7 +82,7 @@ def ConvertFahrenheit(celsius):
 
 # time config 12 hour cycle
 LIGHTSSTART = 8 # 8 am light start
-LIGHTSEND = 18 # 8pm light end
+LIGHTSEND = 18+2 # 8pm light end
 
 print("Starting Garden Controller")
 while(True):
@@ -121,7 +121,7 @@ while(True):
 
 		humidity, temperature = Adafruit_DHT.read_retry(TEMPHUMIDSENSOR, GPIO_DHT11)
 
-		if humidity < 70:
+		if humidity < 95:
 			print("humidity on")
 			GPIO.output(GPIO_HUMID, 1)
 		else:
